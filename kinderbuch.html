@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ein Tag auf dem Bauernhof</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #e8d5b7;
+      background-image:
+        radial-gradient(ellipse at 20% 80%, #d4b896 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, #f0e0c0 0%, transparent 60%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: Georgia, 'Times New Roman', serif;
+      overflow: hidden;
+    }
+
+    /* ── Book shell ── */
+    #book {
+      position: relative;
+      width: min(920px, 96vw);
+      height: min(660px, 94vh);
+      background: #fffdf5;
+      border-radius: 18px;
+      box-shadow:
+        0 2px 0 #c8a870,
+        0 6px 32px rgba(100, 60, 10, 0.22),
+        0 1px 4px rgba(0,0,0,0.10);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Page stack ── */
+    #page-container {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.45s ease;
+    }
+
+    .page.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Illustration ── */
+    .illustration {
+      position: relative;
+      flex: 0 0 62%;
+      overflow: hidden;
+    }
+
+    .illustration svg,
+    .illustration canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Text area ── */
+    .text-area {
+      flex: 1;
+      padding: 14px 28px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #fffdf5;
+      border-top: 2px solid rgba(180, 130, 60, 0.18);
+    }
+
+    .page-title {
+      font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+      color: #7a3b10;
+      font-weight: bold;
+      margin-bottom: 5px;
+      letter-spacing: 0.01em;
+    }
+
+    .page-text {
+      font-size: clamp(0.92rem, 2vw, 1.18rem);
+      color: #4e3320;
+      line-height: 1.65;
+    }
+
+    /* ── Nav bar ── */
+    #nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      height: 62px;
+      background: rgba(255, 253, 245, 0.97);
+      border-top: 1px solid rgba(180, 130, 60, 0.15);
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      background: #e8c060;
+      border: none;
+      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, background 0.15s ease, opacity 0.25s ease;
+      box-shadow: 0 2px 8px rgba(120, 80, 10, 0.20);
+      flex-shrink: 0;
+    }
+
+    .nav-btn:hover {
+      background: #d4a030;
+      transform: scale(1.09);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.93);
+    }
+
+    .nav-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #4e3320;
+      pointer-events: none;
+    }
+
+    #page-indicator {
+      font-size: 1rem;
+      color: #8a6030;
+      letter-spacing: 0.03em;
+      user-select: none;
+    }
+
+    #restart-btn {
+      background: #7aba78;
+      color: #fff;
+      border: none;
+      border-radius: 22px;
+      padding: 9px 20px;
+      font-size: 1rem;
+      font-family: Georgia, serif;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(30, 100, 30, 0.22);
+      transition: transform 0.15s ease, background 0.15s ease, opacity 0.25s ease;
+      display: none;
+      white-space: nowrap;
+    }
+
+    #restart-btn:hover {
+      background: #5a9a58;
+      transform: scale(1.06);
+    }
+
+    #restart-btn.hidden {
+      display: none;
+    }
+
+    /* ── Mute button ── */
+    #mute-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 200;
+      background: rgba(255, 253, 245, 0.88);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    #mute-btn:hover {
+      background: rgba(232, 192, 96, 0.90);
+      transform: scale(1.10);
+    }
+
+    #mute-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #4e3320;
+      pointer-events: none;
+    }
+
+    /* ── Responsive tweaks ── */
+    @media (max-width: 640px) {
+      .text-area {
+        padding: 10px 16px 6px;
+      }
+
+      #nav-bar {
+        height: 54px;
+        padding: 6px 10px;
+      }
+
+      .nav-btn {
+        width: 40px;
+        height: 40px;
+      }
+    }
+
+    @media (max-height: 500px) {
+      .illustration {
+        flex: 0 0 55%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="book">
+  <button id="mute-btn" title="Ton an/aus" aria-label="Ton an/aus"></button>
+
+  <div id="page-container">
+    <!-- Pages injected by JS -->
+  </div>
+
+  <div id="nav-bar">
+    <button id="prev-btn" class="nav-btn hidden" title="Zurueck" aria-label="Zurueck">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
+      </svg>
+    </button>
+
+    <span id="page-indicator" aria-live="polite">Seite 1 von 5</span>
+
+    <button id="next-btn" class="nav-btn" title="Weiter" aria-label="Weiter">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+      </svg>
+    </button>
+
+    <button id="restart-btn" aria-label="Nochmal lesen">Nochmal lesen</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ================================================================
+   PAGES DATA
+   Each page object will grow in later steps with illustration
+   and audio data. For now: title, text, and background palette.
+   ================================================================ */
+const PAGES = [
+  {
+    id: 1,
+    title: 'Guten Morgen, Bauernhof!',
+    text: 'Die Sonne geht auf und taucht alles in warmes, goldenes Licht. Der Hahn steht auf dem Dach und kräht laut: Kikeriki!',
+    palette: { sky: '#fce8b2', ground: '#c8a840', accent: '#f9a825' }
+  },
+  {
+    id: 2,
+    title: 'Die Kuh auf der Wiese',
+    text: 'Die Kuh steht auf der frischen, grünen Wiese und frisst Gras. Sie hebt den Kopf und ruft: Muuuh! Bunte Schmetterlinge tanzen um sie herum.',
+    palette: { sky: '#b8e4f9', ground: '#7cc870', accent: '#a5d6a7' }
+  },
+  {
+    id: 3,
+    title: 'In der Scheune',
+    text: 'In der alten Scheune riecht es wunderbar nach Heu. Eine kleine Maus huscht durch das Stroh. Die Katze liegt oben und schnurrt ganz leise.',
+    palette: { sky: '#ffe0b2', ground: '#d4a030', accent: '#c87820' }
+  },
+  {
+    id: 4,
+    title: 'Am Teich',
+    text: 'Am Teich schaukeln die Enten sanft auf dem Wasser. Ein grüner Frosch sitzt auf einem Stein und schaut neugierig. Platsch! Er springt hinein.',
+    palette: { sky: '#e1f5fe', ground: '#4fc3f7', accent: '#29b6f6' }
+  },
+  {
+    id: 5,
+    title: 'Gute Nacht, Bauernhof!',
+    text: 'Der Abend kommt und die ersten Sterne erscheinen am Himmel. Alle Tiere schmuggeln sich in ihre warmen Betten. Schlaf gut, kleiner Bauernhof.',
+    palette: { sky: '#1a1a4e', ground: '#2c3e8a', accent: '#7986cb' }
+  }
+];
+
+/* ================================================================
+   STATE
+   ================================================================ */
+const state = {
+  currentPage: 0,
+  isTransitioning: false,
+  isMuted: false,
+  audioStarted: false
+};
+
+/* ================================================================
+   DOM REFERENCES
+   ================================================================ */
+const dom = {
+  book:           document.getElementById('book'),
+  pageContainer:  document.getElementById('page-container'),
+  prevBtn:        document.getElementById('prev-btn'),
+  nextBtn:        document.getElementById('next-btn'),
+  restartBtn:     document.getElementById('restart-btn'),
+  pageIndicator:  document.getElementById('page-indicator'),
+  muteBtn:        document.getElementById('mute-btn')
+};
+
+/* ================================================================
+   ILLUSTRATION MODULE  (Step 1: placeholder SVGs)
+   Will be replaced with full illustrations in Step 2.
+   ================================================================ */
+const Illustration = {
+  render(page) {
+    const { sky, ground, accent } = page.palette;
+    // Simple placeholder: gradient sky + ground strip + page label
+    return `
+      <svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice"
+           xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sky-${page.id}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${sky}"/>
+            <stop offset="100%" stop-color="${accent}" stop-opacity="0.4"/>
+          </linearGradient>
+        </defs>
+        <!-- Sky -->
+        <rect width="920" height="410" fill="url(#sky-${page.id})"/>
+        <!-- Ground -->
+        <ellipse cx="460" cy="440" rx="600" ry="120" fill="${ground}" opacity="0.55"/>
+        <!-- Placeholder label -->
+        <text x="460" y="210" text-anchor="middle"
+              font-family="Georgia, serif" font-size="26"
+              fill="rgba(78,51,32,0.25)" font-style="italic">
+          Seite ${page.id} — Illustration folgt
+        </text>
+      </svg>
+    `.trim();
+  }
+};
+
+/* ================================================================
+   AUDIO MODULE  (Step 4 — stubs only for now)
+   ================================================================ */
+const Audio = {
+  ctx: null,
+
+  init() {
+    // AudioContext created on first user interaction (browser policy)
+  },
+
+  ensureContext() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+
+  playPageMusic(/* pageIndex */) {
+    // Implemented in Step 4
+  },
+
+  stopMusic() {
+    // Implemented in Step 4
+  },
+
+  playSound(/* soundId */) {
+    // Implemented in Step 4
+  }
+};
+
+/* ================================================================
+   MUTE BUTTON
+   ================================================================ */
+const MuteButton = {
+  ICON_ON: `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05
+             c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71
+             s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+  </svg>`,
+
+  ICON_OFF: `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63z
+             m2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12
+             c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71z
+             M4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25
+             c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21
+             21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+  </svg>`,
+
+  update() {
+    dom.muteBtn.innerHTML = state.isMuted ? this.ICON_OFF : this.ICON_ON;
+    dom.muteBtn.setAttribute('title', state.isMuted ? 'Ton an' : 'Ton aus');
+    dom.muteBtn.setAttribute('aria-label', state.isMuted ? 'Ton an' : 'Ton aus');
+  },
+
+  toggle() {
+    state.isMuted = !state.isMuted;
+    this.update();
+    // Audio.setMuted(state.isMuted);  — wired up in Step 4
+  }
+};
+
+/* ================================================================
+   PAGE RENDERER
+   ================================================================ */
+const PageRenderer = {
+  build(index) {
+    const page = PAGES[index];
+    const el = document.createElement('div');
+    el.className = 'page';
+    el.dataset.index = index;
+
+    el.innerHTML = `
+      <div class="illustration" data-page-id="${page.id}">
+        ${Illustration.render(page)}
+      </div>
+      <div class="text-area">
+        <div class="page-title">${page.title}</div>
+        <div class="page-text">${page.text}</div>
+      </div>
+    `;
+
+    return el;
+  },
+
+  getEl(index) {
+    return dom.pageContainer.querySelector(`.page[data-index="${index}"]`);
+  }
+};
+
+/* ================================================================
+   NAVIGATION
+   ================================================================ */
+const Nav = {
+  update() {
+    const i = state.currentPage;
+    const total = PAGES.length;
+    const isFirst = i === 0;
+    const isLast  = i === total - 1;
+
+    dom.prevBtn.classList.toggle('hidden', isFirst);
+    dom.nextBtn.style.display   = isLast ? 'none'  : '';
+    dom.restartBtn.style.display = isLast ? 'flex'  : 'none';
+
+    dom.pageIndicator.textContent = `Seite ${i + 1} von ${total}`;
+  },
+
+  goTo(newIndex) {
+    if (state.isTransitioning) return;
+    if (newIndex === state.currentPage) return;
+    if (newIndex < 0 || newIndex >= PAGES.length) return;
+
+    state.isTransitioning = true;
+
+    const currentEl = PageRenderer.getEl(state.currentPage);
+    const nextEl    = PageRenderer.getEl(newIndex);
+
+    // Start audio context on first navigation
+    if (!state.audioStarted) {
+      state.audioStarted = true;
+      Audio.ensureContext();
+    }
+
+    // Cross-fade: activate next, deactivate current
+    nextEl.classList.add('active');
+
+    // Let the browser register the class before removing the other
+    requestAnimationFrame(() => {
+      currentEl.classList.remove('active');
+    });
+
+    state.currentPage = newIndex;
+    this.update();
+
+    // Audio page music — wired up in Step 4
+    // Audio.playPageMusic(newIndex);
+
+    setTimeout(() => {
+      state.isTransitioning = false;
+    }, 480);
+  },
+
+  next() { this.goTo(state.currentPage + 1); },
+  prev() { this.goTo(state.currentPage - 1); }
+};
+
+/* ================================================================
+   INIT
+   ================================================================ */
+function init() {
+  // Build all page elements and add to DOM
+  PAGES.forEach((_, i) => {
+    dom.pageContainer.appendChild(PageRenderer.build(i));
+  });
+
+  // Show first page immediately (no transition)
+  PageRenderer.getEl(0).classList.add('active');
+
+  // Initial nav state
+  Nav.update();
+  MuteButton.update();
+
+  // Bind navigation buttons
+  dom.prevBtn.addEventListener('click', () => Nav.prev());
+  dom.nextBtn.addEventListener('click', () => Nav.next());
+  dom.restartBtn.addEventListener('click', () => Nav.goTo(0));
+  dom.muteBtn.addEventListener('click', () => MuteButton.toggle());
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') Nav.next();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')  Nav.prev();
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
