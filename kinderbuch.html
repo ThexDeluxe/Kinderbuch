@@ -245,7 +245,7 @@
   </div>
 
   <div id="nav-bar">
-    <button id="prev-btn" class="nav-btn hidden" title="Zurueck" aria-label="Zurueck">
+    <button id="prev-btn" class="nav-btn hidden" title="Zurück" aria-label="Zurück">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
       </svg>
@@ -267,272 +267,754 @@
 'use strict';
 
 /* ================================================================
-   PAGES DATA
-   Each page object will grow in later steps with illustration
-   and audio data. For now: title, text, and background palette.
+   DATEN
    ================================================================ */
 const PAGES = [
-  {
-    id: 1,
-    title: 'Guten Morgen, Bauernhof!',
-    text: 'Die Sonne geht auf und taucht alles in warmes, goldenes Licht. Der Hahn steht auf dem Dach und kräht laut: Kikeriki!',
-    palette: { sky: '#fce8b2', ground: '#c8a840', accent: '#f9a825' }
-  },
-  {
-    id: 2,
-    title: 'Die Kuh auf der Wiese',
-    text: 'Die Kuh steht auf der frischen, grünen Wiese und frisst Gras. Sie hebt den Kopf und ruft: Muuuh! Bunte Schmetterlinge tanzen um sie herum.',
-    palette: { sky: '#b8e4f9', ground: '#7cc870', accent: '#a5d6a7' }
-  },
-  {
-    id: 3,
-    title: 'In der Scheune',
-    text: 'In der alten Scheune riecht es wunderbar nach Heu. Eine kleine Maus huscht durch das Stroh. Die Katze liegt oben und schnurrt ganz leise.',
-    palette: { sky: '#ffe0b2', ground: '#d4a030', accent: '#c87820' }
-  },
-  {
-    id: 4,
-    title: 'Am Teich',
-    text: 'Am Teich schaukeln die Enten sanft auf dem Wasser. Ein grüner Frosch sitzt auf einem Stein und schaut neugierig. Platsch! Er springt hinein.',
-    palette: { sky: '#e1f5fe', ground: '#4fc3f7', accent: '#29b6f6' }
-  },
-  {
-    id: 5,
-    title: 'Gute Nacht, Bauernhof!',
-    text: 'Der Abend kommt und die ersten Sterne erscheinen am Himmel. Alle Tiere schmuggeln sich in ihre warmen Betten. Schlaf gut, kleiner Bauernhof.',
-    palette: { sky: '#1a1a4e', ground: '#2c3e8a', accent: '#7986cb' }
-  }
+  { id: 1, title: 'Guten Morgen, Bauernhof!',
+    text: 'Die Sonne geht auf und taucht alles in warmes Licht. Der Hahn steht auf dem Dach und kräht laut: Kikeriki!' },
+  { id: 2, title: 'Die Kuh auf der Wiese',
+    text: 'Die Kuh steht auf der grünen Wiese und frisst Gras. Sie hebt den Kopf und ruft: Muuuh! Bunte Schmetterlinge tanzen um sie herum.' },
+  { id: 3, title: 'In der Scheune',
+    text: 'In der Scheune riecht es nach Heu. Eine kleine Maus huscht durch das Stroh. Die Katze schnurrt und schläft weiter.' },
+  { id: 4, title: 'Am Teich',
+    text: 'Die Enten schaukeln sanft auf dem Teich. Der Frosch sitzt auf einem Stein und springt ins Wasser: Platsch!' },
+  { id: 5, title: 'Gute Nacht, Bauernhof!',
+    text: 'Der Mond lächelt und die Sterne funkeln. Alle Tiere kuscheln sich ein. Schlaf gut, kleiner Bauernhof.' }
 ];
 
-/* ================================================================
-   STATE
-   ================================================================ */
-const state = {
-  currentPage: 0,
-  isTransitioning: false,
-  isMuted: false,
-  audioStarted: false
-};
+const state = { currentPage: 0, isTransitioning: false, isMuted: false, audioStarted: false };
 
-/* ================================================================
-   DOM REFERENCES
-   ================================================================ */
 const dom = {
-  book:           document.getElementById('book'),
-  pageContainer:  document.getElementById('page-container'),
-  prevBtn:        document.getElementById('prev-btn'),
-  nextBtn:        document.getElementById('next-btn'),
-  restartBtn:     document.getElementById('restart-btn'),
-  pageIndicator:  document.getElementById('page-indicator'),
-  muteBtn:        document.getElementById('mute-btn')
+  pageContainer: document.getElementById('page-container'),
+  prevBtn:       document.getElementById('prev-btn'),
+  nextBtn:       document.getElementById('next-btn'),
+  restartBtn:    document.getElementById('restart-btn'),
+  pageIndicator: document.getElementById('page-indicator'),
+  muteBtn:       document.getElementById('mute-btn')
 };
 
 /* ================================================================
-   ILLUSTRATION MODULE  (Step 1: placeholder SVGs)
-   Will be replaced with full illustrations in Step 2.
+   ILLUSTRATIONEN (SVG, Collagen-Stil: Papierstuecke mit Schatten)
    ================================================================ */
 const Illustration = {
-  render(page) {
-    const { sky, ground, accent } = page.palette;
-    // Simple placeholder: gradient sky + ground strip + page label
+  render(page) { return this['_p' + page.id](); },
+
+  /* gemeinsame Definitionen: weicher Papierschatten + Papierkorn */
+  defs(p, shadow, strong, soft, seed) {
     return `
-      <svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice"
-           xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="sky-${page.id}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${sky}"/>
-            <stop offset="100%" stop-color="${accent}" stop-opacity="0.4"/>
-          </linearGradient>
-        </defs>
-        <!-- Sky -->
-        <rect width="920" height="410" fill="url(#sky-${page.id})"/>
-        <!-- Ground -->
-        <ellipse cx="460" cy="440" rx="600" ry="120" fill="${ground}" opacity="0.55"/>
-        <!-- Placeholder label -->
-        <text x="460" y="210" text-anchor="middle"
-              font-family="Georgia, serif" font-size="26"
-              fill="rgba(78,51,32,0.25)" font-style="italic">
-          Seite ${page.id} — Illustration folgt
-        </text>
-      </svg>
-    `.trim();
+      <filter id="${p}-sh" x="-25%" y="-25%" width="150%" height="170%">
+        <feDropShadow dx="3" dy="4" stdDeviation="4" flood-color="${shadow}" flood-opacity="${strong}"/></filter>
+      <filter id="${p}-sm" x="-40%" y="-40%" width="180%" height="190%">
+        <feDropShadow dx="2" dy="2" stdDeviation="2.5" flood-color="${shadow}" flood-opacity="${soft}"/></filter>
+      <filter id="${p}-grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="${seed}" result="n"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.15  0 0 0 0.45 -0.08"/>
+      </filter>`;
+  },
+  grain(p) { return `<rect width="920" height="410" filter="url(#${p}-grain)" opacity="0.55" pointer-events="none"/>`; },
+  flower(x, ground, r, c) {
+    const y = ground - 22 - r;
+    return `<g filter="url(#SH)"><rect x="${x - 1}" y="${y}" width="3" height="${24 + r}" fill="#4caf50"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><circle cx="${x}" cy="${y}" r="${r * 0.5}" fill="#fffde7"/></g>`;
+  },
+  star(cx, cy, R) {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? R * 0.45 : R;
+      pts.push((cx + rad * Math.cos(a)).toFixed(1) + ',' + (cy + rad * Math.sin(a)).toFixed(1));
+    }
+    return pts.join(' ');
+  },
+
+  /* ---------- Seite 1: Morgen ---------- */
+  _p1() {
+    const sm = 'url(#p1-sm)';
+    const posts = Array.from({ length: 16 }, (_, i) => {
+      const x = 15 + i * 58, r = [1.5, -1, 2, -1.5, 1, -2, 1.5, -1][i % 8];
+      return `<rect x="${x}" y="342" width="13" height="55" rx="4" fill="#a1887f" transform="rotate(${r},${x + 6},369)"/>`;
+    }).join('');
+    const flowers = [[440, 7, '#f48fb1'], [562, 6, '#ffb74d'], [672, 7, '#ce93d8'], [772, 6, '#80cbc4'], [868, 5, '#ef9a9a']]
+      .map(([x, r, c]) => this.flower(x, 396, r, c).replace('SH', 'p1-sm')).join('');
+    const rays = Array.from({ length: 8 }, (_, i) =>
+      `<rect x="-8" y="-112" width="16" height="42" rx="8" transform="rotate(${i * 45})"/>`).join('');
+    const planks = [244, 264, 284, 304, 324, 344].map(y =>
+      `<rect x="118" y="${y}" width="204" height="3" fill="#ddd5c5" opacity="0.9"/>`).join('');
+    const toes = (x) => [[-9, 3], [0, 7], [8, 4]].map(([dx, dy]) =>
+      `<line x1="${x}" y1="141" x2="${x + dx}" y2="${141 + dy}" stroke="#e65100" stroke-width="3.5" stroke-linecap="round"/>`).join('');
+    return `<svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>
+      ${this.defs('p1', '#3d1a08', 0.22, 0.17, 3)}
+      <linearGradient id="p1-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4a340"/><stop offset="0.5" stop-color="#ffcc80"/><stop offset="1" stop-color="#fff3d6"/></linearGradient>
+    </defs>
+    <rect width="920" height="410" fill="url(#p1-sky)"/>
+    <g id="p1-sun" filter="url(#p1-sh)" transform="translate(740,105)">
+      <circle r="92" fill="#ffe57f" opacity="0.3"/>
+      <g fill="#ffd740">${rays}</g>
+      <circle r="65" fill="#ffd740"/>
+      <circle cx="-20" cy="-10" r="8" fill="#f9a825" opacity="0.65"/><circle cx="20" cy="-10" r="8" fill="#f9a825" opacity="0.65"/>
+      <path d="M-22 16 Q0 32 22 16" stroke="#f9a825" stroke-width="4.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+    </g>
+    <g filter="url(#p1-sh)" transform="rotate(-3,155,75)">
+      <ellipse cx="115" cy="82" rx="42" ry="22" fill="#fff8e1"/><ellipse cx="155" cy="66" rx="55" ry="32" fill="#fff8e1"/><ellipse cx="196" cy="79" rx="38" ry="22" fill="#fff8e1"/></g>
+    <g filter="url(#p1-sh)" transform="rotate(2,490,52)">
+      <ellipse cx="458" cy="57" rx="40" ry="19" fill="#fff8e1"/><ellipse cx="492" cy="45" rx="36" ry="26" fill="#fff8e1"/><ellipse cx="522" cy="55" rx="32" ry="18" fill="#fff8e1"/></g>
+    <path d="M-5 298 Q100 228 250 252 Q400 275 520 228 Q660 180 770 222 Q840 248 925 212 L925 415 L-5 415 Z" fill="#a5d6a7" filter="${sm}"/>
+    <g filter="url(#p1-sh)" transform="rotate(-1.5,220,290)">
+      <rect x="118" y="222" width="204" height="142" rx="5" fill="#f5f0e8"/>${planks}
+      <rect x="196" y="300" width="46" height="64" rx="5" fill="#795548"/><circle cx="235" cy="334" r="5" fill="#c9a100"/>
+      <rect x="130" y="238" width="52" height="44" rx="5" fill="#b3e5fc"/><rect x="156" y="238" width="3" height="44" fill="#90caf9"/><rect x="130" y="260" width="52" height="3" fill="#90caf9"/>
+      <rect x="254" y="238" width="52" height="44" rx="5" fill="#b3e5fc"/><rect x="280" y="238" width="3" height="44" fill="#90caf9"/><rect x="254" y="260" width="52" height="3" fill="#90caf9"/>
+    </g>
+    <g filter="url(#p1-sh)" transform="rotate(-1.5,220,182)">
+      <polygon points="100,224 220,140 340,224" fill="#b71c1c"/><polygon points="100,224 220,140 160,224" fill="#c62828" opacity="0.25"/>
+      <rect x="268" y="154" width="26" height="42" rx="3" fill="#6d4c41"/><rect x="264" y="150" width="34" height="10" rx="3" fill="#5d4037"/>
+      <ellipse cx="281" cy="143" rx="11" ry="9" fill="#cfd8dc" opacity="0.6"/><ellipse cx="288" cy="132" rx="8" ry="7" fill="#cfd8dc" opacity="0.42"/><ellipse cx="280" cy="122" rx="7" ry="6" fill="#cfd8dc" opacity="0.28"/>
+    </g>
+    <g id="p1-rooster" filter="url(#p1-sh)" transform="rotate(6,220,140)">
+      <ellipse cx="186" cy="120" rx="31" ry="9" fill="#e53935" transform="rotate(-22,186,120)"/>
+      <ellipse cx="182" cy="130" rx="29" ry="8" fill="#fb8c00" transform="rotate(-35,182,130)"/>
+      <ellipse cx="178" cy="141" rx="27" ry="7.5" fill="#fdd835" transform="rotate(-48,178,141)"/>
+      <ellipse cx="215" cy="113" rx="25" ry="20" fill="#ef6c00"/><ellipse cx="212" cy="117" rx="16" ry="11" fill="#e65100" opacity="0.45"/>
+      <ellipse cx="227" cy="101" rx="11" ry="14" fill="#ef6c00"/><circle cx="234" cy="87" r="15" fill="#ef6c00"/>
+      <ellipse cx="225" cy="74" rx="5.5" ry="8" fill="#c62828"/><ellipse cx="233" cy="71" rx="6" ry="9" fill="#c62828"/><ellipse cx="241" cy="74" rx="5" ry="7.5" fill="#c62828"/>
+      <ellipse cx="241" cy="95" rx="4.5" ry="6.5" fill="#c62828"/>
+      <polygon id="p1-beak-top" points="247,83 261,88 247,88" fill="#fdd835"/><polygon id="p1-beak-bot" points="247,88 261,88 247,93" fill="#fbc02d"/>
+      <circle cx="241" cy="81" r="5.5" fill="white"/><circle cx="242.5" cy="82" r="3" fill="#1a1a1a"/><circle cx="243.5" cy="80.5" r="1" fill="white"/>
+      <line x1="210" y1="132" x2="206" y2="141" stroke="#e65100" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="222" y1="132" x2="227" y2="141" stroke="#e65100" stroke-width="4.5" stroke-linecap="round"/>
+      ${toes(206)}${toes(227)}
+    </g>
+    <path d="M-5 362 Q200 342 460 355 Q650 365 925 340 L925 415 L-5 415 Z" fill="#66bb6a"/>
+    <g filter="${sm}"><rect x="-5" y="356" width="930" height="11" rx="5" fill="#8d6e63"/><rect x="-5" y="375" width="930" height="11" rx="5" fill="#8d6e63"/>${posts}</g>
+    ${flowers}
+    ${this.grain('p1')}</svg>`;
+  },
+
+  /* ---------- Seite 2: Wiese ---------- */
+  _p2() {
+    const flw = [[60, 6, '#f48fb1'], [160, 5, '#fff176'], [820, 6, '#80cbc4'], [880, 5, '#ce93d8']]
+      .map(([x, r, c]) => this.flower(x, 398, r, c).replace('SH', 'p2-sm')).join('');
+    const wing = (cx, cy, rx, ry, rot, c) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" transform="rotate(${rot},${cx},${cy})"/>`;
+    const butterfly = (id, x, y, rot, c1, c2) => `
+      <g id="${id}" filter="url(#p2-sm)" transform="translate(${x},${y})${rot ? ' rotate(' + rot + ')' : ''}">
+        ${wing(-24, -12, 30, 19, -30, c1)}${wing(24, -12, 30, 19, 30, c1)}${wing(-18, 10, 22, 14, 20, c2)}${wing(18, 10, 22, 14, -20, c2)}
+        <circle cx="-22" cy="-18" r="5" fill="#fffde7" opacity="0.55"/><circle cx="22" cy="-18" r="5" fill="#fffde7" opacity="0.55"/>
+        <ellipse cx="0" cy="0" rx="4.5" ry="16" fill="#3e2723"/><circle cx="0" cy="-17" r="4" fill="#3e2723"/>
+        <line x1="-2" y1="-20" x2="-13" y2="-36" stroke="#3e2723" stroke-width="1.5"/><line x1="2" y1="-20" x2="13" y2="-36" stroke="#3e2723" stroke-width="1.5"/>
+        <circle cx="-14" cy="-37" r="2.5" fill="#3e2723"/><circle cx="14" cy="-37" r="2.5" fill="#3e2723"/></g>`;
+    const legs = [205, 242, 332, 369].map(x => `<rect x="${x}" y="308" width="22" height="68" rx="9" fill="#f5f5f5"/><rect x="${x}" y="368" width="22" height="12" rx="4" fill="#795548"/>`).join('');
+    return `<svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>
+      ${this.defs('p2', '#1a3a0a', 0.22, 0.17, 7)}
+      <linearGradient id="p2-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#64b5f6"/><stop offset="1" stop-color="#e3f2fd"/></linearGradient>
+    </defs>
+    <rect width="920" height="410" fill="url(#p2-sky)"/>
+    <g filter="url(#p2-sh)" transform="rotate(-2,200,70)"><ellipse cx="170" cy="76" rx="48" ry="20" fill="#fff"/><ellipse cx="205" cy="62" rx="40" ry="26" fill="#fff"/><ellipse cx="238" cy="74" rx="34" ry="18" fill="#fff"/></g>
+    <g filter="url(#p2-sh)" transform="rotate(2,780,50)"><ellipse cx="760" cy="56" rx="42" ry="18" fill="#fff"/><ellipse cx="792" cy="44" rx="34" ry="23" fill="#fff"/></g>
+    <path d="M-5 250 Q120 195 280 215 Q430 235 560 195 Q690 155 820 190 Q880 210 925 195 L925 415 L-5 415 Z" fill="#c8e6c9" filter="url(#p2-sm)"/>
+    <g filter="url(#p2-sh)" transform="rotate(2,710,310)">
+      <circle cx="710" cy="230" r="75" fill="#43a047"/><circle cx="676" cy="258" r="52" fill="#388e3c"/><circle cx="744" cy="255" r="55" fill="#2e7d32"/><circle cx="710" cy="200" r="48" fill="#4caf50"/>
+      <rect x="696" y="290" width="28" height="100" rx="8" fill="#5d4037"/></g>
+    <path d="M-5 325 Q200 305 460 316 Q660 328 925 302 L925 415 L-5 415 Z" fill="#66bb6a"/>
+    <g id="p2-cow" filter="url(#p2-sh)" transform="rotate(-2,305,260)">
+      <path d="M192 268 Q160 242 162 210 Q164 185 178 192" stroke="#e0e0e0" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="178" cy="192" r="12" fill="#6d4c41"/>
+      ${legs}
+      <ellipse cx="308" cy="318" rx="38" ry="16" fill="#ffcdd2"/>
+      <rect x="195" y="228" width="210" height="86" rx="50" fill="#f5f5f5"/>
+      <ellipse cx="240" cy="252" rx="34" ry="24" fill="#3a3a3a" transform="rotate(-12,240,252)"/><ellipse cx="352" cy="278" rx="26" ry="19" fill="#3a3a3a" transform="rotate(8,352,278)"/>
+      <rect x="388" y="244" width="32" height="58" rx="12" fill="#f5f5f5"/>
+      <circle cx="448" cy="240" r="50" fill="#f5f5f5"/>
+      <ellipse cx="408" cy="212" rx="18" ry="24" fill="#f5f5f5" transform="rotate(-18,408,212)"/><ellipse cx="408" cy="212" rx="11" ry="15" fill="#ffcdd2" transform="rotate(-18,408,212)"/>
+      <ellipse cx="418" cy="196" rx="7" ry="16" fill="#fdd835" transform="rotate(-15,418,196)"/>
+      <ellipse cx="484" cy="255" rx="28" ry="21" fill="#ffcdd2"/><circle cx="475" cy="255" r="5.5" fill="#ef9a9a"/><circle cx="492" cy="255" r="5.5" fill="#ef9a9a"/>
+      <path id="p2-cow-mouth" d="M470 270 Q484 280 498 270" stroke="#e57373" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="460" cy="228" r="14" fill="white"/><circle cx="463" cy="230" r="8.5" fill="#1a1a1a"/><circle cx="466" cy="227" r="3" fill="white"/>
+      <line x1="453" y1="216" x2="450" y2="209" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/><line x1="460" y1="214" x2="458" y2="207" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/><line x1="467" y1="215" x2="467" y2="208" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    ${butterfly('p2-butterfly-1', 575, 130, 0, '#9575cd', '#7e57c2')}
+    ${butterfly('p2-butterfly-2', 640, 190, 15, '#ffa726', '#ef6c00')}
+    ${flw}
+    <g fill="#4caf50"><ellipse cx="80" cy="398" rx="18" ry="8" transform="rotate(-8,80,398)"/><ellipse cx="380" cy="402" rx="14" ry="6" transform="rotate(5,380,402)"/><ellipse cx="770" cy="397" rx="16" ry="7" transform="rotate(-5,770,397)"/></g>
+    ${this.grain('p2')}</svg>`;
+  },
+
+  /* ---------- Seite 3: Scheune ---------- */
+  _p3() {
+    const planks = Array.from({ length: 15 }, (_, i) => `<rect x="${62 * i}" y="0" width="2" height="335" fill="#3a2012" opacity="0.4"/>`).join('');
+    const straw = Array.from({ length: 16 }, (_, i) => {
+      const x = i * 57 + 8, y = 345 + Math.round(Math.sin(i * 1.3) * 5);
+      return `<line x1="${x}" y1="${y}" x2="${x + 45}" y2="${y + 9}" stroke="#f9a825" stroke-width="2.5" stroke-linecap="round" opacity="0.55"/>`;
+    }).join('');
+    const ear = (pts, inner) => `<polygon points="${pts}" fill="#ff8a65"/><polygon points="${inner}" fill="#ffccbc" opacity="0.8"/>`;
+    const whisk = (pts) => pts.map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#795548" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>`).join('');
+    return `<svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>
+      ${this.defs('p3', '#2d1200', 0.32, 0.24, 11)}
+      <filter id="p3-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <linearGradient id="p3-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d4037"/><stop offset="1" stop-color="#8d6e63"/></linearGradient>
+      <linearGradient id="p3-floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd54f"/><stop offset="1" stop-color="#ffca28"/></linearGradient>
+    </defs>
+    <rect width="920" height="410" fill="url(#p3-bg)"/>${planks}
+    <polygon points="110,122 184,122 330,340 170,340" fill="#fff9c4" opacity="0.14"/>
+    <g filter="url(#p3-sh)"><rect x="110" y="34" width="74" height="88" rx="5" fill="#fff9c4" filter="url(#p3-glow)"/>
+      <rect x="144" y="34" width="4" height="88" fill="#6d4c41"/><rect x="110" y="74" width="74" height="4" fill="#6d4c41"/>
+      <rect x="106" y="30" width="82" height="96" rx="5" fill="none" stroke="#6d4c41" stroke-width="6"/></g>
+    <path d="M-5 335 Q200 320 460 330 Q680 340 925 318 L925 415 L-5 415 Z" fill="url(#p3-floor)"/>${straw}
+    <g filter="url(#p3-sm)">
+      <rect x="488" y="238" width="90" height="68" rx="10" fill="#ffc107" transform="rotate(2,533,272)"/>
+      <rect x="578" y="238" width="90" height="68" rx="10" fill="#ffca28" transform="rotate(-1,623,272)"/>
+      <rect x="668" y="238" width="90" height="68" rx="10" fill="#ffc107" transform="rotate(2,713,272)"/>
+      <rect x="530" y="174" width="90" height="68" rx="10" fill="#ffca28" transform="rotate(-2,575,208)"/>
+      <rect x="622" y="174" width="90" height="68" rx="10" fill="#ffd54f" transform="rotate(1,667,208)"/></g>
+    <g stroke="#e65100" stroke-width="3" opacity="0.45"><line x1="533" y1="238" x2="533" y2="306"/><line x1="623" y1="238" x2="623" y2="306"/><line x1="713" y1="238" x2="713" y2="306"/><line x1="575" y1="174" x2="575" y2="242"/><line x1="667" y1="174" x2="667" y2="242"/></g>
+    <g id="p3-hay" filter="url(#p3-sh)" transform="rotate(1,580,280)">
+      <ellipse cx="560" cy="310" rx="200" ry="85" fill="#ffd54f"/><ellipse cx="520" cy="295" rx="130" ry="60" fill="#ffe082"/>
+      <line x1="400" y1="295" x2="365" y2="275" stroke="#f9a825" stroke-width="3" stroke-linecap="round"/><line x1="420" y1="285" x2="390" y2="262" stroke="#ffb300" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="700" y1="290" x2="738" y2="268" stroke="#f9a825" stroke-width="3" stroke-linecap="round"/><line x1="680" y1="280" x2="712" y2="258" stroke="#ffb300" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g id="p3-cat" filter="url(#p3-sh)" transform="rotate(3,520,258)">
+      <path d="M432 258 Q395 238 398 210 Q402 185 428 200 Q445 210 438 230" stroke="#ff7043" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <ellipse cx="520" cy="260" rx="88" ry="28" fill="#ff8a65"/>
+      <path d="M470 248 Q475 260 470 272" stroke="#e64a19" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <path d="M495 244 Q500 260 495 276" stroke="#e64a19" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <path d="M540 244 Q545 260 540 276" stroke="#e64a19" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <circle cx="608" cy="254" r="30" fill="#ff8a65"/>
+      ${ear('592,226 582,206 606,220', '591,224 585,210 604,220')}${ear('622,224 614,204 636,218', '621,222 617,208 634,219')}
+      <path d="M594 252 Q602 246 610 252" stroke="#4a2c00" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M614 252 Q622 246 630 252" stroke="#4a2c00" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M607 260 L612 265 L617 260 Z" fill="#f06292"/>
+      ${whisk([[580, 258, 602, 262], [578, 265, 602, 266], [634, 262, 656, 258], [634, 266, 657, 265]])}
+    </g>
+    <g id="p3-mouse" filter="url(#p3-sh)" transform="translate(155,315)">
+      <path d="M26 34 Q60 30 70 10 Q76 0 66 -4" stroke="#bdbdbd" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="0" cy="30" rx="28" ry="24" fill="#9e9e9e"/><circle cx="0" cy="8" r="26" fill="#9e9e9e"/>
+      <circle cx="-22" cy="-10" r="20" fill="#9e9e9e"/><circle cx="-22" cy="-10" r="13" fill="#f48fb1"/>
+      <circle cx="22" cy="-10" r="20" fill="#9e9e9e"/><circle cx="22" cy="-10" r="13" fill="#f48fb1"/>
+      <circle cx="-9" cy="6" r="7" fill="#212121"/><circle cx="-7" cy="4" r="2.5" fill="white"/><circle cx="9" cy="6" r="7" fill="#212121"/><circle cx="11" cy="4" r="2.5" fill="white"/>
+      <ellipse cx="0" cy="16" rx="5" ry="4" fill="#f06292"/>
+      ${whisk([[-6, 16, -28, 12], [-6, 19, -28, 20], [6, 16, 28, 12], [6, 19, 28, 20]])}
+    </g>
+    ${this.grain('p3')}</svg>`;
+  },
+
+  /* ---------- Seite 4: Teich ---------- */
+  _p4() {
+    const lily = [[290, 308], [380, 324], [465, 310], [555, 322], [500, 296]].map(([cx, cy], i) =>
+      `<g filter="url(#p4-sm)"><ellipse cx="${cx}" cy="${cy}" rx="${22 + i * 2}" ry="${12 + i}" fill="#2e7d32" transform="rotate(${i * 15 - 20},${cx},${cy})"/><circle cx="${cx + 8}" cy="${cy - 3}" r="4" fill="#f48fb1"/></g>`).join('');
+    const reeds = [[120, 190], [150, 205], [90, 215], [185, 198], [780, 192], [810, 205], [755, 215], [840, 200]].map(([x, y]) =>
+      `<line x1="${x}" y1="${y}" x2="${x + 5}" y2="330" stroke="#8d6e63" stroke-width="5" stroke-linecap="round"/><ellipse cx="${x + 2}" cy="${y}" rx="7" ry="18" fill="#6d4c41"/>`).join('');
+    const duck = (id, tf) => `
+      <g id="${id}" filter="url(#p4-sh)" transform="${tf}">
+        <path d="M-40 4 Q-56 -8 -50 -18 Q-40 -6 -30 -6 Z" fill="#eeeeee"/>
+        <ellipse cx="0" cy="0" rx="42" ry="26" fill="#f5f5f5"/><ellipse cx="35" cy="-18" rx="22" ry="18" fill="#f5f5f5"/>
+        <polygon points="54,-18 70,-14 54,-10" fill="#ff8f00"/><circle cx="46" cy="-22" r="4" fill="#1a1a1a"/><circle cx="47" cy="-23" r="1.5" fill="white"/>
+        <path d="M-20 0 Q0 -10 20 0" stroke="#e0e0e0" stroke-width="3" fill="none"/></g>`;
+    return `<svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>
+      ${this.defs('p4', '#003a4a', 0.22, 0.17, 5)}
+      <linearGradient id="p4-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#81d4fa"/><stop offset="1" stop-color="#e1f5fe"/></linearGradient>
+      <linearGradient id="p4-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fc3f7"/><stop offset="1" stop-color="#0288d1"/></linearGradient>
+    </defs>
+    <rect width="920" height="410" fill="url(#p4-sky)"/>
+    <g filter="url(#p4-sh)" transform="rotate(-2,300,70)"><ellipse cx="270" cy="76" rx="50" ry="20" fill="#fff"/><ellipse cx="305" cy="62" rx="42" ry="26" fill="#fff"/><ellipse cx="340" cy="74" rx="34" ry="18" fill="#fff"/></g>
+    <path d="M-5 240 Q150 205 320 222 Q480 238 620 210 Q750 185 925 215 L925 415 L-5 415 Z" fill="#a5d6a7" filter="url(#p4-sm)"/>
+    <path d="M-5 285 Q80 260 200 275 Q260 282 280 310 L-5 345 Z" fill="#66bb6a" filter="url(#p4-sm)"/>
+    <path d="M925 280 Q850 255 730 270 Q670 278 648 308 L925 345 Z" fill="#66bb6a" filter="url(#p4-sm)"/>
+    <ellipse cx="435" cy="330" rx="255" ry="80" fill="url(#p4-water)" filter="url(#p4-sh)"/>
+    <ellipse cx="400" cy="312" rx="130" ry="20" fill="#fff" opacity="0.14"/>
+    ${lily}${reeds}
+    <g id="p4-ripples" fill="none" stroke="#fff" stroke-width="2" opacity="1">
+      <ellipse cx="612" cy="338" rx="0" ry="0" opacity="0"/><ellipse cx="612" cy="338" rx="0" ry="0" opacity="0"/><ellipse cx="612" cy="338" rx="0" ry="0" opacity="0"/></g>
+    ${duck('p4-duck-1', 'translate(272,298) rotate(-4)')}
+    ${duck('p4-duck-2', 'translate(492,314) rotate(3) scale(-1,1)')}
+    <g filter="url(#p4-sm)"><ellipse cx="668" cy="326" rx="52" ry="28" fill="#9e9e9e"/><ellipse cx="660" cy="318" rx="32" ry="14" fill="#bdbdbd" opacity="0.55"/></g>
+    <g id="p4-frog" filter="url(#p4-sh)" transform="translate(668,304)">
+      <path d="M-22 18 Q-44 30 -38 16 Q-34 6 -22 12" fill="#4caf50"/><path d="M22 18 Q44 30 38 16 Q34 6 22 12" fill="#4caf50"/>
+      <ellipse cx="0" cy="12" rx="34" ry="26" fill="#66bb6a"/><ellipse cx="0" cy="16" rx="22" ry="16" fill="#c8e6c9"/>
+      <ellipse cx="0" cy="-8" rx="34" ry="26" fill="#66bb6a"/>
+      <circle cx="-18" cy="-22" r="13" fill="white"/><circle cx="-16" cy="-22" r="8" fill="#1a1a1a"/><circle cx="-14" cy="-24" r="2.5" fill="white"/>
+      <circle cx="18" cy="-22" r="13" fill="white"/><circle cx="20" cy="-22" r="8" fill="#1a1a1a"/><circle cx="22" cy="-24" r="2.5" fill="white"/>
+      <path d="M-20 0 Q0 12 20 0" stroke="#2e7d32" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <line x1="-14" y1="28" x2="-24" y2="36" stroke="#4caf50" stroke-width="3.5" stroke-linecap="round"/><line x1="-6" y1="30" x2="-8" y2="40" stroke="#4caf50" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="6" y1="30" x2="8" y2="40" stroke="#4caf50" stroke-width="3.5" stroke-linecap="round"/><line x1="14" y1="28" x2="24" y2="36" stroke="#4caf50" stroke-width="3.5" stroke-linecap="round"/>
+    </g>
+    <path d="M-5 378 Q180 362 350 374 Q480 382 -5 412 Z" fill="#4caf50" opacity="0.7"/><path d="M925 378 Q740 362 580 376 Q480 384 925 412 Z" fill="#4caf50" opacity="0.7"/>
+    ${this.grain('p4')}</svg>`;
+  },
+
+  /* ---------- Seite 5: Abend ---------- */
+  _p5() {
+    const S = [[340, 45, 9], [545, 70, 11], [715, 40, 9], [440, 122, 8], [620, 138, 9], [820, 118, 10], [62, 58, 8], [300, 150, 8], [470, 42, 7]];
+    const stars = S.map(([cx, cy, R], i) => `
+      <g id="p5-star-${i + 1}" class="p5-star" data-cx="${cx}" data-cy="${cy}" data-on="${i < 3 ? 1 : 0}" opacity="${i < 3 ? 0.95 : 0}">
+        <circle cx="${cx}" cy="${cy}" r="${R * 1.8}" fill="#fffde7" opacity="0.07"/>
+        <polygon points="${this.star(cx, cy, R)}" fill="#fff59d" filter="url(#p5-sm)" stroke="#fff59d" stroke-width="1.5" stroke-linejoin="round"/></g>`).join('');
+    return `<svg viewBox="0 0 920 410" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>
+      ${this.defs('p5', '#000020', 0.45, 0.35, 9)}
+      <filter id="p5-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="12" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <linearGradient id="p5-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101646"/><stop offset="0.6" stop-color="#2a3490"/><stop offset="1" stop-color="#5c4a9a"/></linearGradient>
+      <mask id="p5-crescent"><rect width="920" height="410" fill="black"/><circle cx="190" cy="90" r="68" fill="white"/><circle cx="228" cy="74" r="56" fill="black"/></mask>
+    </defs>
+    <rect id="p5-sky-bg" width="920" height="410" fill="url(#p5-sky)"/>
+    <circle cx="170" cy="121" r="95" fill="#fff9c4" opacity="0.08" filter="url(#p5-glow)"/>
+    ${stars}
+    <g id="p5-moon" filter="url(#p5-sh)" transform="translate(0,26)">
+      <circle cx="190" cy="90" r="68" fill="#fff59d" mask="url(#p5-crescent)"/>
+      <circle cx="152" cy="78" r="5.5" fill="#f9a825" opacity="0.85"/><circle cx="168" cy="70" r="5.5" fill="#f9a825" opacity="0.85"/>
+      <path id="p5-moon-mouth" d="M146 96 Q158 108 172 100" stroke="#f9a825" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.9"/>
+    </g>
+    <path d="M-5 280 Q100 225 240 248 Q380 270 500 228 Q650 185 780 225 Q850 248 925 225 L925 415 L-5 415 Z" fill="#1a2a3a"/>
+    <path d="M-5 338 Q150 310 320 326 Q500 342 680 318 Q800 305 925 320 L925 415 L-5 415 Z" fill="#14202e"/>
+    <g filter="url(#p5-sm)">
+      <rect x="370" y="268" width="170" height="110" rx="4" fill="#1d2b3d"/><polygon points="355,270 455,200 555,270" fill="#1d2b3d"/><rect x="510" y="212" width="20" height="38" rx="3" fill="#1d2b3d"/>
+      <rect x="388" y="294" width="40" height="36" rx="4" fill="#ffd740" filter="url(#p5-glow)"/><rect x="388" y="294" width="40" height="36" rx="4" fill="#ffd740"/>
+      <rect x="472" y="294" width="40" height="36" rx="4" fill="#ffd740" filter="url(#p5-glow)"/><rect x="472" y="294" width="40" height="36" rx="4" fill="#ffd740"/>
+      <rect x="424" y="330" width="32" height="48" rx="3" fill="#101a26"/></g>
+    <g filter="url(#p5-sm)"><rect x="680" y="295" width="120" height="80" rx="3" fill="#1d2b3d"/><polygon points="668,297 740,248 812,297" fill="#1d2b3d"/>
+      <rect x="710" y="312" width="30" height="24" rx="3" fill="#ffd740" opacity="0.8"/></g>
+    ${this.grain('p5')}</svg>`;
   }
 };
 
 /* ================================================================
-   AUDIO MODULE  (Step 4 — stubs only for now)
+   SOUND: Hintergrundmusik + Tiergeraeusche (Web Audio, synthetisch)
    ================================================================ */
-const Audio = {
-  ctx: null,
+const Sound = {
+  ctx: null, master: null, musicGain: null, timers: [],
 
-  init() {
-    // AudioContext created on first user interaction (browser policy)
-  },
+  NOTE: { C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.0, A4: 440.0, B4: 493.88,
+          Cs4: 277.18, Fs4: 369.99, Gs4: 415.3, C5: 523.25, D5: 587.33, E5: 659.25, Fs5: 739.99,
+          G5: 783.99, A5: 880.0, Cs5: 554.37, B3: 246.94, A3: 220.0, G3: 196.0, D4b: 293.66, R: 0 },
 
-  ensureContext() {
+  /* Melodien: [Note, Laenge in Schlaegen] */
+  SONGS: [
+    { bpm: 132, type: 'triangle', vol: 0.24, ratio: 0.6, loop: true,           // Morgen: hell, huepfend
+      m: [['G4',.5],['B4',.5],['D5',.5],['G5',.5],['E5',.5],['D5',.5],['B4',1],
+          ['A4',.5],['C5',.5],['E5',.5],['A5',.5],['G5',.5],['E5',.5],['D5',1],
+          ['G4',.5],['B4',.5],['D5',.5],['G5',.5],['A5',.5],['G5',.5],['E5',.5],['D5',.5],
+          ['B4',.5],['D5',.5],['G5',1.5],['R',1]] },
+    { bpm: 84, type: 'sine', vol: 0.22, ratio: 0.97, loop: true,               // Wiese: ruhig, fliessend
+      m: [['E4',1],['G4',1],['C5',2],['B4',1],['A4',1],['G4',2],
+          ['E4',1],['A4',1],['C5',2],['D5',1],['C5',1],['G4',2],
+          ['F4',1],['A4',1],['C5',2],['B4',1],['G4',1],['C5',3],['R',1]] },
+    { bpm: 124, type: 'triangle', vol: 0.3, loop: true, pluck: true,           // Scheune: verspielt, Pizzicato
+      m: [['D5',.5],['R',.5],['Fs4',.5],['R',.5],['A4',.5],['D5',.5],['R',1],
+          ['A4',.5],['R',.5],['Fs4',.5],['R',.5],['D4',.5],['E4',.5],['R',1],
+          ['Fs4',.5],['A4',.5],['D5',.5],['Cs5',.5],['A4',.5],['R',.5],['Fs4',1],
+          ['E4',.5],['Fs4',.5],['A4',.5],['Fs4',.5],['D4',1.5],['R',1.5]] },
+    { bpm: 78, type: 'sine', vol: 0.22, ratio: 0.98, loop: true, sway: true,    // Teich: wogend, entspannt
+      m: [['A4',1.5],['Cs5',.5],['E5',1],['D5',1.5],['Cs5',.5],['B4',1],
+          ['A4',1.5],['B4',.5],['Cs5',1],['E5',1],['Fs5',2],['E5',1],
+          ['D5',1.5],['Cs5',.5],['B4',1],['Gs4',1],['A4',3],['R',1]] },
+    { bpm: 62, type: 'sine', vol: 0.24, ratio: 1, loop: false, fade: true,      // Abend: Wiegenlied, ausblendend
+      m: [['E4',1.5],['E4',.5],['G4',2],['E4',1.5],['E4',.5],['G4',2],
+          ['E4',1],['G4',1],['C5',2],['B4',1.5],['A4',.5],['A4',1],['G4',3],
+          ['D4',1.5],['E4',.5],['F4',2],['D4',1.5],['E4',.5],['F4',2],
+          ['D4',1],['F4',1],['B4',1],['A4',1],['G4',4]] }
+  ],
+
+  ensure() {
     if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = state.isMuted ? 0 : 0.55;
+      this.master.connect(this.ctx.destination);
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return true;
   },
 
-  playPageMusic(/* pageIndex */) {
-    // Implemented in Step 4
+  setMuted(m) {
+    if (!this.ctx) return;
+    this.master.gain.setTargetAtTime(m ? 0 : 0.55, this.ctx.currentTime, 0.05);
+  },
+
+  /* einzelne Musiknote */
+  _note(freq, t, dur, vol, o) {
+    const c = this.ctx, osc = c.createOscillator(), g = c.createGain();
+    osc.type = o.type; osc.frequency.value = freq;
+    if (o.sway) { osc.detune.setValueAtTime(-18, t); osc.detune.linearRampToValueAtTime(18, t + dur); }
+    osc.connect(g); g.connect(o.out);
+    if (o.pluck) {
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + Math.min(dur, 0.28));
+    } else {
+      const a = Math.min(0.06, dur * 0.2);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + a);
+      g.gain.setValueAtTime(vol * 0.8, t + dur * 0.7);
+      g.gain.linearRampToValueAtTime(0, t + dur);
+    }
+    osc.start(t); osc.stop(t + dur + 0.05);
+  },
+
+  playPageMusic(i) {
+    this.stopMusic();
+    if (!this.ctx) return;
+    const s = this.SONGS[i], beat = 60 / s.bpm, c = this.ctx;
+    const out = c.createGain(); out.connect(this.master); this.musicGain = out;
+    const total = s.m.reduce((a, n) => a + n[1], 0) * beat;
+    let start = c.currentTime + 0.1;
+    if (s.fade) { out.gain.setValueAtTime(1, start); out.gain.linearRampToValueAtTime(0.0, start + total); }
+    const o = { type: s.type, pluck: s.pluck, sway: s.sway, out };
+    const schedule = () => {
+      let t = start;
+      for (const [n, b] of s.m) {
+        const f = this.NOTE[n], d = b * beat;
+        if (f > 0) this._note(f, t, d * (s.ratio || 0.9), s.vol, o);
+        t += d;
+      }
+      start = t;
+      if (s.loop) this.timers.push(setTimeout(schedule, Math.max(100, (t - c.currentTime) * 1000 - 400)));
+    };
+    schedule();
   },
 
   stopMusic() {
-    // Implemented in Step 4
+    this.timers.forEach(clearTimeout); this.timers = [];
+    if (this.musicGain && this.ctx) {
+      const g = this.musicGain, now = this.ctx.currentTime;
+      g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now);
+      g.gain.linearRampToValueAtTime(0, now + 0.3);
+      setTimeout(() => { try { g.disconnect(); } catch (e) { /* ok */ } }, 500);
+    }
+    this.musicGain = null;
   },
 
-  playSound(/* soundId */) {
-    // Implemented in Step 4
+  /* Hilfsfunktionen fuer Tiergeraeusche */
+  _tone(type, f0, f1, t, dur, vol, extra) {
+    const c = this.ctx, osc = c.createOscillator(), g = c.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(f0, t);
+    osc.frequency.linearRampToValueAtTime(f1, t + dur);
+    let node = osc;
+    if (extra && extra.lowpass) {
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = extra.lowpass;
+      osc.connect(f); node = f;
+    }
+    node.connect(g); g.connect(this.master);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + Math.min(0.03, dur / 4));
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    osc.start(t); osc.stop(t + dur + 0.05);
+    return osc;
+  },
+  _noise(t, dur, freq, vol) {
+    const c = this.ctx, n = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.6;
+    src.connect(f); f.connect(g); g.connect(this.master); g.gain.value = vol;
+    src.start(t);
+  },
+
+  rooster() {
+    const t = this.ctx.currentTime;
+    [[0, 420, 760, .16], [.2, 640, 600, .12], [.36, 600, 900, .16], [.56, 820, 380, .5]].forEach(([d, a, b, l]) =>
+      this._tone('sawtooth', a, b, t + d, l, 0.22, { lowpass: 2600 }));
+  },
+  cow() {
+    const t = this.ctx.currentTime;
+    const o = this._tone('sawtooth', 130, 175, t, 1.7, 0.3, { lowpass: 520 });
+    o.frequency.setValueAtTime(175, t + 0.7); o.frequency.linearRampToValueAtTime(115, t + 1.6);
+    const lfo = this.ctx.createOscillator(), lg = this.ctx.createGain();
+    lfo.frequency.value = 5; lg.gain.value = 7; lfo.connect(lg); lg.connect(o.frequency);
+    lfo.start(t); lfo.stop(t + 1.8);
+  },
+  duck(p) {
+    const t = this.ctx.currentTime, k = p || 1;
+    [0, 0.34].forEach(d => this._tone('square', 480 * k, 270 * k, t + d, 0.2, 0.2, { lowpass: 1800 }));
+  },
+  frog() {
+    const t = this.ctx.currentTime;
+    this._tone('square', 220, 120, t, 0.16, 0.2, { lowpass: 900 });
+    this._tone('square', 200, 110, t + 0.2, 0.16, 0.2, { lowpass: 900 });
+  },
+  splash() { this._noise(this.ctx.currentTime, 0.4, 900, 0.35); },
+  mouse() {
+    const t = this.ctx.currentTime;
+    [0, 0.14, 0.28].forEach((d, i) => this._tone('sine', 1500 + i * 150, 1100, t + d, 0.1, 0.16));
+  },
+  purr() {
+    const t = this.ctx.currentTime, c = this.ctx;
+    const osc = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(), f = c.createBiquadFilter();
+    osc.type = 'sawtooth'; osc.frequency.value = 52; f.type = 'lowpass'; f.frequency.value = 240;
+    lfo.frequency.value = 24; lg.gain.value = 0.18; g.gain.value = 0.2;
+    lfo.connect(lg); lg.connect(g.gain); osc.connect(f); f.connect(g); g.connect(this.master);
+    const env = c.createGain(); env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(1, t + 0.2);
+    env.gain.setValueAtTime(1, t + 1.6); env.gain.linearRampToValueAtTime(0, t + 2.2);
+    g.disconnect(); g.connect(env); env.connect(this.master);
+    osc.start(t); lfo.start(t); osc.stop(t + 2.3); lfo.stop(t + 2.3);
+  },
+  chime(step) {
+    const t = this.ctx.currentTime, base = [1047, 1175, 1319, 1397, 1568, 1760, 1976, 2093][(step || 0) % 8];
+    [0, 0.1].forEach((d, i) => {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = base * (i ? 1.5 : 1);
+      o.connect(g); g.connect(this.master);
+      g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(0.16, t + d + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.9);
+      o.start(t + d); o.stop(t + d + 0.95);
+    });
+  },
+  play(name, arg) { if (this.ctx && this[name]) this[name](arg); }
+};
+
+/* ================================================================
+   KLICK-ANIMATIONEN
+   ================================================================ */
+const Fx = {
+  anim(ms, step, done) {
+    const t0 = performance.now();
+    const f = (now) => {
+      const p = Math.min(1, (now - t0) / ms);
+      step(p);
+      if (p < 1) requestAnimationFrame(f); else if (done) done();
+    };
+    requestAnimationFrame(f);
+  },
+  base(el) { if (el.dataset.base === undefined) el.dataset.base = el.getAttribute('transform') || ''; return el.dataset.base; },
+  /* Transformation um (cx,cy) in Elternkoordinaten, vor die Grundtransformation gesetzt */
+  set(el, cx, cy, o) {
+    o = o || {};
+    el.setAttribute('transform',
+      `translate(${cx + (o.dx || 0)} ${cy + (o.dy || 0)}) rotate(${o.r || 0}) scale(${o.sx === undefined ? 1 : o.sx} ${o.sy === undefined ? 1 : o.sy}) translate(${-cx} ${-cy}) ${this.base(el)}`);
+  },
+  reset(el) { el.setAttribute('transform', this.base(el)); },
+  /* klickbar, mit Sperre waehrend die Animation laeuft */
+  bind(el, fn) {
+    if (!el) return;
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => {
+      if (el.dataset.busy) return;
+      Sound.ensure();
+      el.dataset.busy = '1';
+      fn(() => { delete el.dataset.busy; });
+    });
+  }
+};
+
+const Interactions = {
+  init() { PAGES.forEach((p, i) => this['_p' + p.id](PageRenderer.getEl(i))); },
+
+  _p1(r) {
+    const rooster = r.querySelector('#p1-rooster'), top = r.querySelector('#p1-beak-top'), bot = r.querySelector('#p1-beak-bot');
+    Fx.bind(rooster, (done) => {
+      Sound.play('rooster');
+      Fx.anim(1100, (p) => {
+        const open = (p < 0.2 || (p > 0.3 && p < 0.45) || (p > 0.5 && p < 0.9));
+        top.setAttribute('transform', open ? 'translate(0,-4)' : '');
+        bot.setAttribute('transform', open ? 'translate(0,5)' : '');
+        Fx.set(rooster, 220, 140, { r: 7 * Math.sin(p * Math.PI * 5) * (1 - p), dy: -5 * Math.sin(p * Math.PI) });
+      }, () => { Fx.reset(rooster); top.removeAttribute('transform'); bot.removeAttribute('transform'); done(); });
+    });
+    const sun = r.querySelector('#p1-sun');
+    Fx.bind(sun, (done) => {
+      Sound.play('chime', 2);
+      Fx.anim(1400, (p) => {
+        const e = 1 - Math.pow(1 - p, 3);
+        Fx.set(sun, 740, 105, { r: 180 * e, sx: 1 + 0.18 * Math.sin(p * Math.PI), sy: 1 + 0.18 * Math.sin(p * Math.PI) });
+      }, () => { Fx.reset(sun); done(); });
+    });
+  },
+
+  _p2(r) {
+    const cow = r.querySelector('#p2-cow'), mouth = r.querySelector('#p2-cow-mouth');
+    Fx.bind(cow, (done) => {
+      Sound.play('cow');
+      mouth.setAttribute('d', 'M468 266 Q484 298 500 266 Z'); mouth.setAttribute('fill', '#b71c1c');
+      Fx.anim(1700, (p) => {
+        Fx.set(cow, 300, 330, { r: -2.5 * Math.sin(p * Math.PI), dy: -4 * Math.sin(p * Math.PI * 2) });
+      }, () => {
+        Fx.reset(cow); mouth.setAttribute('d', 'M470 270 Q484 280 498 270'); mouth.setAttribute('fill', 'none'); done();
+      });
+    });
+    const flutter = (id, cx, cy, dir) => Fx.bind(r.querySelector(id), (done) => {
+      const el = r.querySelector(id);
+      Sound.play('chime', 4);
+      Fx.anim(2200, (p) => {
+        const a = p * Math.PI * 2;
+        Fx.set(el, cx, cy, { dx: dir * 70 * Math.sin(a), dy: -45 * Math.sin(a * 2) * (1 - p * 0.3) - 20 * Math.sin(p * Math.PI),
+                             sx: 0.45 + 0.55 * Math.abs(Math.cos(p * 46)), r: 12 * Math.sin(a) });
+      }, () => { Fx.reset(el); done(); });
+    });
+    flutter('#p2-butterfly-1', 575, 130, 1);
+    flutter('#p2-butterfly-2', 640, 190, -1);
+  },
+
+  _p3(r) {
+    const mouse = r.querySelector('#p3-mouse');
+    let running = false;
+    const run = () => {
+      if (running) return;
+      running = true;
+      Sound.ensure(); Sound.play('mouse');
+      Fx.anim(2000, (p) => {
+        Fx.set(mouse, 155, 330, { dx: 640 * p, dy: -Math.abs(Math.sin(p * Math.PI * 9)) * 16 });
+        if (p > 0.55) mouse.setAttribute('opacity', String(Math.max(0, 1 - (p - 0.55) / 0.45)));
+      }, () => {
+        setTimeout(() => {
+          Fx.reset(mouse); mouse.setAttribute('opacity', '0');
+          Fx.anim(500, (p) => mouse.setAttribute('opacity', String(p)), () => { mouse.removeAttribute('opacity'); running = false; });
+        }, 700);
+      });
+    };
+    mouse.style.cursor = 'pointer'; mouse.addEventListener('click', run);
+    const hay = r.querySelector('#p3-hay'); hay.style.cursor = 'pointer'; hay.addEventListener('click', run);
+
+    const cat = r.querySelector('#p3-cat');
+    Fx.bind(cat, (done) => {
+      Sound.play('purr');
+      Fx.anim(2200, (p) => {
+        const k = Math.sin(p * Math.PI);
+        Fx.set(cat, 520, 288, { sy: 1 + 0.05 * k * Math.sin(p * 60), sx: 1 - 0.02 * k * Math.sin(p * 60), r: 1.2 * k * Math.sin(p * 30) });
+      }, () => { Fx.reset(cat); done(); });
+    });
+  },
+
+  _p4(r) {
+    const shake = (id, cx, cy, pitch) => Fx.bind(r.querySelector(id), (done) => {
+      const el = r.querySelector(id);
+      Sound.play('duck', pitch);
+      Fx.anim(1100, (p) => {
+        Fx.set(el, cx, cy, { r: 12 * Math.sin(p * Math.PI * 8) * (1 - p), dy: -7 * Math.abs(Math.sin(p * Math.PI * 3)) * (1 - p) });
+      }, () => { Fx.reset(el); done(); });
+    });
+    shake('#p4-duck-1', 272, 298, 1);
+    shake('#p4-duck-2', 492, 314, 0.82);
+
+    const frog = r.querySelector('#p4-frog'), rings = r.querySelectorAll('#p4-ripples ellipse');
+    Fx.bind(frog, (done) => {
+      Sound.play('frog');
+      Fx.anim(900, (p) => {   // Sprung in den Teich
+        Fx.set(frog, 668, 304, { dx: -58 * p, dy: -90 * 4 * p * (1 - p) + 20 * p, r: -25 * p });
+      }, () => {
+        frog.setAttribute('opacity', '0'); Sound.play('splash');
+        Fx.anim(1500, (p) => {   // Wasserkreise
+          rings.forEach((e, i) => {
+            const q = Math.max(0, Math.min(1, p * 1.4 - i * 0.18));
+            e.setAttribute('rx', String(10 + q * 60)); e.setAttribute('ry', String(4 + q * 24));
+            e.setAttribute('opacity', String(q > 0 ? 0.8 * (1 - q) : 0));
+          });
+        }, () => {
+          Fx.reset(frog); frog.setAttribute('opacity', '0');
+          Fx.anim(600, (p) => frog.setAttribute('opacity', String(p)), () => { frog.removeAttribute('opacity'); done(); });
+        });
+      });
+    });
+  },
+
+  _p5(r) {
+    const svg = r.querySelector('svg'), stars = [...r.querySelectorAll('.p5-star')], moon = r.querySelector('#p5-moon');
+    let count = 0;
+    const pop = (s) => {
+      const cx = +s.dataset.cx, cy = +s.dataset.cy; s.dataset.on = '1';
+      Fx.anim(600, (p) => {
+        const sc = p < 0.7 ? (p / 0.7) * 1.35 : 1.35 - 0.35 * ((p - 0.7) / 0.3);
+        s.setAttribute('opacity', String(0.95 * Math.min(1, p * 2)));
+        Fx.set(s, cx, cy, { sx: sc, sy: sc, r: 72 * (1 - p) });
+      }, () => Fx.reset(s));
+    };
+    const twinkle = (s) => {
+      const cx = +s.dataset.cx, cy = +s.dataset.cy;
+      Fx.anim(800, (p) => { const k = 1 + 0.5 * Math.sin(p * Math.PI * 3) * (1 - p); Fx.set(s, cx, cy, { sx: k, sy: k, r: 40 * p }); }, () => Fx.reset(s));
+    };
+    svg.style.cursor = 'pointer';
+    svg.addEventListener('click', () => {            // Klick in den Himmel: naechster Stern erscheint
+      Sound.ensure();
+      const next = stars.find(s => s.dataset.on === '0');
+      if (next) { Sound.play('chime', 3 + count++); pop(next); }
+      else { Sound.play('chime', 7); stars.forEach((s, i) => setTimeout(() => twinkle(s), i * 90)); }
+    });
+    stars.forEach(s => s.addEventListener('click', (e) => {
+      e.stopPropagation(); Sound.ensure();
+      if (s.dataset.on === '1') { Sound.play('chime', 1 + (stars.indexOf(s) % 6)); twinkle(s); }
+      else { Sound.play('chime', 3 + count++); pop(s); }
+    }));
+    const mouth = r.querySelector('#p5-moon-mouth');
+    moon.style.cursor = 'pointer';
+    moon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (moon.dataset.busy) return; moon.dataset.busy = '1';
+      Sound.ensure(); Sound.play('chime', 0);
+      mouth.setAttribute('d', 'M144 94 Q158 116 174 98');
+      Fx.anim(1200, (p) => { const k = 1 + 0.07 * Math.sin(p * Math.PI); Fx.set(moon, 190, 116, { sx: k, sy: k, r: 4 * Math.sin(p * Math.PI * 2) }); },
+        () => { Fx.reset(moon); mouth.setAttribute('d', 'M146 96 Q158 108 172 100'); delete moon.dataset.busy; });
+    });
   }
 };
 
 /* ================================================================
-   MUTE BUTTON
+   MUTE, SEITEN, NAVIGATION
    ================================================================ */
 const MuteButton = {
-  ICON_ON: `<svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05
-             c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71
-             s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-  </svg>`,
-
-  ICON_OFF: `<svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63z
-             m2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12
-             c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71z
-             M4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25
-             c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21
-             21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-  </svg>`,
-
+  ICON_ON: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+  ICON_OFF: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>',
   update() {
     dom.muteBtn.innerHTML = state.isMuted ? this.ICON_OFF : this.ICON_ON;
-    dom.muteBtn.setAttribute('title', state.isMuted ? 'Ton an' : 'Ton aus');
-    dom.muteBtn.setAttribute('aria-label', state.isMuted ? 'Ton an' : 'Ton aus');
+    dom.muteBtn.title = dom.muteBtn.ariaLabel = state.isMuted ? 'Ton an' : 'Ton aus';
   },
-
   toggle() {
     state.isMuted = !state.isMuted;
     this.update();
-    // Audio.setMuted(state.isMuted);  — wired up in Step 4
+    Sound.setMuted(state.isMuted);
   }
 };
 
-/* ================================================================
-   PAGE RENDERER
-   ================================================================ */
 const PageRenderer = {
   build(index) {
-    const page = PAGES[index];
-    const el = document.createElement('div');
-    el.className = 'page';
-    el.dataset.index = index;
-
-    el.innerHTML = `
-      <div class="illustration" data-page-id="${page.id}">
-        ${Illustration.render(page)}
-      </div>
-      <div class="text-area">
-        <div class="page-title">${page.title}</div>
-        <div class="page-text">${page.text}</div>
-      </div>
-    `;
-
+    const page = PAGES[index], el = document.createElement('div');
+    el.className = 'page'; el.dataset.index = index;
+    el.innerHTML = `<div class="illustration">${Illustration.render(page)}</div>
+      <div class="text-area"><div class="page-title">${page.title}</div><div class="page-text">${page.text}</div></div>`;
     return el;
   },
-
-  getEl(index) {
-    return dom.pageContainer.querySelector(`.page[data-index="${index}"]`);
-  }
+  getEl(index) { return dom.pageContainer.querySelector(`.page[data-index="${index}"]`); }
 };
 
-/* ================================================================
-   NAVIGATION
-   ================================================================ */
 const Nav = {
   update() {
-    const i = state.currentPage;
-    const total = PAGES.length;
-    const isFirst = i === 0;
-    const isLast  = i === total - 1;
-
-    dom.prevBtn.classList.toggle('hidden', isFirst);
-    dom.nextBtn.style.display   = isLast ? 'none'  : '';
-    dom.restartBtn.style.display = isLast ? 'flex'  : 'none';
-
-    dom.pageIndicator.textContent = `Seite ${i + 1} von ${total}`;
+    const i = state.currentPage, last = i === PAGES.length - 1;
+    dom.prevBtn.classList.toggle('hidden', i === 0);
+    dom.nextBtn.style.display = last ? 'none' : '';
+    dom.restartBtn.style.display = last ? 'flex' : 'none';
+    dom.pageIndicator.textContent = `Seite ${i + 1} von ${PAGES.length}`;
   },
-
-  goTo(newIndex) {
-    if (state.isTransitioning) return;
-    if (newIndex === state.currentPage) return;
-    if (newIndex < 0 || newIndex >= PAGES.length) return;
-
+  goTo(n) {
+    if (state.isTransitioning || n === state.currentPage || n < 0 || n >= PAGES.length) return;
     state.isTransitioning = true;
-
-    const currentEl = PageRenderer.getEl(state.currentPage);
-    const nextEl    = PageRenderer.getEl(newIndex);
-
-    // Start audio context on first navigation
-    if (!state.audioStarted) {
-      state.audioStarted = true;
-      Audio.ensureContext();
-    }
-
-    // Cross-fade: activate next, deactivate current
-    nextEl.classList.add('active');
-
-    // Let the browser register the class before removing the other
-    requestAnimationFrame(() => {
-      currentEl.classList.remove('active');
-    });
-
-    state.currentPage = newIndex;
+    const cur = PageRenderer.getEl(state.currentPage), next = PageRenderer.getEl(n);
+    next.classList.add('active');
+    requestAnimationFrame(() => cur.classList.remove('active'));
+    state.currentPage = n;
     this.update();
-
-    // Audio page music — wired up in Step 4
-    // Audio.playPageMusic(newIndex);
-
-    setTimeout(() => {
-      state.isTransitioning = false;
-    }, 480);
+    if (state.audioStarted) Sound.playPageMusic(n);
+    setTimeout(() => { state.isTransitioning = false; }, 480);
   },
-
   next() { this.goTo(state.currentPage + 1); },
   prev() { this.goTo(state.currentPage - 1); }
 };
 
-/* ================================================================
-   INIT
-   ================================================================ */
+/* Musik startet erst nach der ersten Nutzer-Interaktion (Autoplay-Regeln) */
+function startAudioOnce() {
+  if (state.audioStarted) return;
+  if (!Sound.ensure()) return;
+  state.audioStarted = true;
+  Sound.playPageMusic(state.currentPage);
+}
+
 function init() {
-  // Build all page elements and add to DOM
-  PAGES.forEach((_, i) => {
-    dom.pageContainer.appendChild(PageRenderer.build(i));
-  });
-
-  // Show first page immediately (no transition)
+  PAGES.forEach((_, i) => dom.pageContainer.appendChild(PageRenderer.build(i)));
   PageRenderer.getEl(0).classList.add('active');
-
-  // Initial nav state
+  Interactions.init();
   Nav.update();
   MuteButton.update();
 
-  // Bind navigation buttons
   dom.prevBtn.addEventListener('click', () => Nav.prev());
   dom.nextBtn.addEventListener('click', () => Nav.next());
   dom.restartBtn.addEventListener('click', () => Nav.goTo(0));
   dom.muteBtn.addEventListener('click', () => MuteButton.toggle());
 
-  // Keyboard navigation
+  document.addEventListener('pointerdown', startAudioOnce, true);
   document.addEventListener('keydown', (e) => {
+    startAudioOnce();
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') Nav.next();
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')  Nav.prev();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') Nav.prev();
   });
 }
 
